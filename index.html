@@ -1,0 +1,537 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<title>創業養成小組第二期</title>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-database-compat.js"></script>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;700;900&family=Orbitron:wght@700;900&display=swap');
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{--bg:#f4f5f9;--sur:#fff;--card:#fff;--bdr:#dfe1ea;--acc:#e08a1e;--acc2:#8b5cf6;--acc3:#0891b2;--red:#dc2626;--grn:#16a34a;--txt:#1f2230;--mut:#6b7080;--fh:'Orbitron',sans-serif;--fb:'Noto Sans TC',sans-serif}
+body{background:var(--bg);color:var(--txt);font-family:var(--fb);min-height:100vh}
+#app{min-height:100vh}
+.bg-grid{position:fixed;inset:0;z-index:0;background-image:linear-gradient(rgba(139,92,246,.04)1px,transparent 1px),linear-gradient(90deg,rgba(139,92,246,.04)1px,transparent 1px);background-size:40px 40px;pointer-events:none}
+.hero{position:relative;z-index:1;text-align:center;padding:40px 20px 28px;background:linear-gradient(180deg,rgba(139,92,246,.1),transparent);border-bottom:1px solid var(--bdr)}
+.hero-badge{display:inline-block;background:rgba(224,138,30,.15);border:1px solid rgba(224,138,30,.4);color:var(--acc);padding:4px 16px;border-radius:999px;font-size:12px;font-family:var(--fh);letter-spacing:2px;margin-bottom:14px}
+.hero-title{font-family:var(--fh);font-size:clamp(20px,5vw,40px);font-weight:900;line-height:1.2;background:linear-gradient(135deg,#e08a1e,#dc2626,#8b5cf6);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;margin-bottom:8px}
+.hero-desc{color:var(--mut);font-size:13px;margin-bottom:6px}
+.hero-day{font-family:var(--fh);font-size:12px;color:var(--acc3)}
+.tabs{position:relative;z-index:1;display:flex;border-bottom:1px solid var(--bdr);background:var(--sur)}
+.tab{flex:1;padding:13px 8px;background:none;border:none;color:var(--mut);font-family:var(--fb);font-size:14px;cursor:pointer;border-bottom:2px solid transparent}
+.tab.on{color:var(--acc);border-bottom-color:var(--acc)}
+.main{position:relative;z-index:1;max-width:800px;margin:0 auto;padding:20px 16px 80px}
+.panel{background:var(--card);border:1px solid var(--bdr);border-radius:16px;padding:22px}
+.ptitle{font-family:var(--fh);font-size:17px;color:var(--acc);margin-bottom:18px}
+.dbadge{background:rgba(8,145,178,.1);border:1px solid rgba(8,145,178,.3);color:var(--acc3);padding:7px 14px;border-radius:8px;font-size:13px;margin-bottom:18px;display:inline-block}
+.flabel{display:block;font-size:13px;color:var(--mut);margin-bottom:7px;font-weight:700}
+.sel{width:100%;padding:11px 14px;background:var(--sur);border:1px solid var(--bdr);border-radius:10px;color:var(--txt);font-family:var(--fb);font-size:15px;outline:none}
+.sel.sm{width:auto;min-width:130px;font-size:13px;padding:7px 12px}
+.sel:focus{border-color:var(--acc2)}
+.sel:disabled{opacity:.4;cursor:not-allowed}
+.done-msg{background:rgba(22,163,74,.12);border:1px solid rgba(22,163,74,.3);color:var(--grn);padding:14px;border-radius:10px;font-size:14px;text-align:center;margin-bottom:16px}
+.tsec{margin-bottom:18px}
+.tsec-title{font-size:13px;font-weight:700;color:var(--acc2);margin-bottom:10px;padding:6px 12px;background:rgba(139,92,246,.08);border-radius:8px;border-left:3px solid var(--acc2)}
+.titem{background:var(--sur);border:1px solid var(--bdr);border-radius:12px;padding:13px 15px;display:flex;align-items:center;gap:12px;margin-bottom:9px}
+.tic{font-size:24px;flex-shrink:0}
+.tinfo{flex:1}
+.tname{font-weight:700;font-size:13px;margin-bottom:3px;line-height:1.4}
+.tgoal{font-size:11px;color:var(--mut)}
+.pbox{width:58px;height:58px;border-radius:10px;border:2px dashed var(--bdr);background:var(--bg);cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;overflow:hidden;position:relative}
+.pbox.has{border-style:solid;border-color:var(--grn)}
+.pbox img{width:100%;height:100%;object-fit:cover}
+.pbox-ic{font-size:20px;color:var(--mut)}
+.pbox-rm{position:absolute;top:1px;right:1px;background:rgba(0,0,0,.6);border:none;border-radius:50%;color:#fff;width:18px;height:18px;font-size:10px;cursor:pointer;line-height:18px;text-align:center}
+.hint{font-size:12px;color:var(--mut);margin-bottom:18px;padding:10px 12px;background:rgba(0,0,0,.03);border-radius:8px;border-left:3px solid var(--acc2)}
+.sbtn{width:100%;padding:15px;background:linear-gradient(135deg,var(--acc),#dc2626);border:none;border-radius:12px;color:#fff;font-family:var(--fh);font-size:15px;font-weight:700;cursor:pointer}
+.sbtn:disabled{opacity:.5;cursor:not-allowed}
+.msg{margin-top:12px;padding:12px 16px;border-radius:10px;font-size:14px;text-align:center}
+.msg.ok{background:rgba(22,163,74,.12);color:var(--grn);border:1px solid rgba(22,163,74,.3)}
+.msg.err{background:rgba(220,38,38,.12);color:var(--red);border:1px solid rgba(220,38,38,.3)}
+.notice-box{margin-top:22px;background:rgba(139,92,246,.06);border:1px solid rgba(139,92,246,.25);border-radius:12px;padding:14px 16px}
+.notice-title{font-size:13px;font-weight:700;color:var(--acc2);margin-bottom:8px}
+.notice-item{font-size:12px;color:var(--mut);line-height:1.8;margin-bottom:2px}
+.pbar-track{background:rgba(0,0,0,.07);border-radius:999px;height:10px;position:relative;overflow:hidden}
+.pbar-fill{height:100%;border-radius:999px;transition:width 1s}
+.pbar-pct{position:absolute;right:6px;top:50%;transform:translateY(-50%);font-size:9px;color:#fff;font-weight:700}
+.slbl{font-size:14px;font-weight:700;color:var(--mut);margin-bottom:10px}
+.cblock{background:rgba(0,0,0,.02);border:1px solid var(--bdr);border-radius:12px;padding:16px;margin-bottom:12px}
+.chead{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px}
+.cname{font-family:var(--fh);font-size:14px;color:var(--acc2)}
+.cpct{font-size:14px;color:var(--acc);font-weight:700;background:rgba(224,138,30,.12);border:1px solid rgba(224,138,30,.3);padding:3px 10px;border-radius:20px}
+.mgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:12px}
+.mcard{background:var(--sur);border:1px solid var(--bdr);border-radius:12px;padding:13px}
+.mhead{display:flex;align-items:center;justify-content:space-between;margin-bottom:6px}
+.mname{font-weight:700;font-size:14px}
+.mpct{font-family:var(--fh);font-size:13px;font-weight:700}
+.mtask{margin-bottom:6px}
+.mtlbl{font-size:10px;color:var(--mut);margin-bottom:3px}
+.dots{display:flex;flex-wrap:wrap;gap:3px}
+.dot{width:8px;height:8px;border-radius:2px;background:rgba(0,0,0,.1)}
+.dot.on{background:var(--grn)}
+.alogin{display:flex;flex-direction:column;gap:12px;max-width:320px}
+.astats{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:20px}
+.astat{background:var(--bg);border:1px solid var(--bdr);border-radius:10px;padding:14px;text-align:center}
+.astat-n{font-family:var(--fh);font-size:26px;color:var(--acc)}
+.astat-l{font-size:12px;color:var(--mut);margin-top:3px}
+.amem{background:var(--bg);border:1px solid var(--bdr);border-radius:10px;margin-bottom:8px;overflow:hidden}
+.amem summary{padding:11px 14px;cursor:pointer;font-weight:700;list-style:none;display:flex;align-items:center;gap:8px}
+.amem summary::-webkit-details-marker{display:none}
+.atag{font-size:11px;color:var(--mut);font-weight:400}
+.acnt{margin-left:auto;font-size:12px;color:var(--acc3);background:rgba(8,145,178,.1);padding:2px 8px;border-radius:6px}
+.aday{padding:11px 14px;border-top:1px solid var(--bdr)}
+.aday-row{display:flex;align-items:center;gap:8px;color:var(--mut);margin-bottom:8px;flex-wrap:wrap}
+.dbtn{margin-left:auto;background:rgba(220,38,38,.1);border:1px solid rgba(220,38,38,.3);color:var(--red);padding:3px 10px;border-radius:6px;font-size:11px;cursor:pointer}
+.ttag{font-size:11px;padding:3px 10px;border-radius:20px;background:rgba(8,145,178,.1);color:var(--acc3);border:1px solid rgba(8,145,178,.25);text-decoration:none;display:inline-block;margin:2px}
+.msec{background:rgba(224,138,30,.06);border:1px solid rgba(224,138,30,.2);border-radius:12px;padding:14px;margin-bottom:16px}
+.mgrow{display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end;margin-top:10px}
+.mgrow>div{display:flex;flex-direction:column;gap:5px}
+.mbtn{padding:8px 16px;background:linear-gradient(135deg,var(--acc),#dc2626);border:none;border-radius:8px;color:#fff;font-family:var(--fb);font-size:13px;font-weight:700;cursor:pointer;white-space:nowrap}
+footer{position:relative;z-index:1;text-align:center;padding:18px;font-size:12px;color:var(--mut);border-top:1px solid var(--bdr)}
+</style>
+</head>
+<body>
+<div id="app"><div style="display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:100vh;gap:16px"><div style="font-size:56px">⚔️</div><div style="font-size:18px;color:#6b7080;font-family:sans-serif">載入中...</div></div></div>
+<script>
+firebase.initializeApp({
+  apiKey:"AIzaSyCrgMfdn79JOKx4XKA4hNwNZkhNACoizT4",
+  authDomain:"restart-challenge-2026.firebaseapp.com",
+  databaseURL:"https://restart-challenge-2026-default-rtdb.asia-southeast1.firebasedatabase.app",
+  projectId:"restart-challenge-2026",
+  storageBucket:"restart-challenge-2026.firebasestorage.app",
+  messagingSenderId:"477447792834",
+  appId:"1:477447792834:web:c657ca4d3e612d1ccf335b"
+});
+var DB=firebase.database().ref("weihong3");
+var GAS="https://script.google.com/macros/s/AKfycbw8JkqgaWt5ptaP6mnVZvegW6za_pM15yi0arvZvDm-1-TkPdkqedTWNq8lElwsEDMw/exec";
+var ADMIN_PW="jimmy0117";
+var A_START="2026-08-17";
+var A_END="2026-09-20";
+var TOTAL=35;
+
+var DAILY=[
+  {key:"join",icon:"👥",name:"入群1位或陌開10位截圖",goal:25,unit:"天",type:"daily"},
+  {key:"bv",icon:"🧪",name:"BV試用分享",goal:25,unit:"天",type:"daily"}
+];
+var WEEKLY=[
+  {key:"link",icon:"🤝",name:"強連結",goal:5,unit:"次",type:"weekly"},
+  {key:"script",icon:"📝",name:"跑BV或IBV劇本",goal:5,unit:"次",type:"weekly"},
+  {key:"steps",icon:"🚶",name:"皮克敏/手機計步3000步",goal:5,unit:"次",type:"weekly"},
+  {key:"home",icon:"🏠",name:"線上居購或送居購邀請",goal:5,unit:"次",type:"weekly"},
+  {key:"share",icon:"💬",name:"大C分享活動執行心得",goal:5,unit:"次",type:"weekly"}
+];
+var TASKS=DAILY.concat(WEEKLY);
+
+var DEFAULT_DATA={
+  "香綺大C":{
+    "金華A隊":["金華","芷吟","智齡"],
+    "金華B隊":["孟臻","翠韻","1000"],
+    "金華C隊":["小原","冠余","李心怡"],
+    "金華D隊":["郁芬","佳琪","馬姊"],
+    "佩潔A隊":["佩潔","小凱西","婉芸"],
+    "佩潔B隊":["偉庭","桓真","夙敏"],
+    "佩潔C隊":["俊達","宜樺","秋丰"],
+    "佩潔D隊":["育婷","士棻","雯雯"],
+    "凱西A隊":["香綺","欣瑜","蔡心怡"],
+    "凱西B隊":["Cherry","明樺","尉雯"],
+    "凱西C隊":["雅瑜","宥伶","依庭"],
+    "凱西D隊":["小瑜","筱晏","林香君"],
+    "維婉A隊":["巧如","孟妤","書榮"],
+    "維婉B隊":["蕙嬑","伯鍾","瓊慧"],
+    "維婉C隊":["虹琳","儀均","淑芬"],
+    "維婉D隊":["維婉","麗玲","薏蕙"]
+  },
+  "婷芝大C":{
+    "文營富季淑媛隊":["文營","富季","淑媛"],
+    "永峰巧倫宜君隊":["永峰","巧倫","宜君"],
+    "佩華阿耀媛亭隊":["佩華","阿耀","媛亭"],
+    "炘蓉文怡維瑜隊":["炘蓉","文怡","維瑜"],
+    "品悅頭頭雅玲隊":["品悅","頭頭","雅玲"],
+    "瑋仁予郁韻瑾隊":["瑋仁","予郁","韻瑾"],
+    "婷芝智群麗珍隊":["婷芝","智群","麗珍"],
+    "奕廷欣樺育璿隊":["奕廷","欣樺","育璿"],
+    "郁佳婷律純如隊":["郁佳","婷律","純如"],
+    "廸媽雅方祖蔭隊":["廸媽","雅方","祖蔭"],
+    "幸樺靜芝金燕隊":["幸樺","靜芝","金燕"]
+  },
+  "子林大C":{
+    "子林宜睦張雅雯隊":["子林","宜睦","雅雯"],
+    "晶晶慧珊苡家隊":["晶晶","慧珊","苡家"],
+    "銘銓宜蓉念念隊":["銘銓","宜蓉","念念"],
+    "江雅雯姿吟小葉隊":["江雅雯","姿吟","小葉"],
+    "柏仁凱貞馨儀隊":["柏仁","凱貞","馨儀"],
+    "奕閔承翰紹暉隊":["奕閔","承翰","紹暉"],
+    "Kim民宗咖琪隊":["Kim","民宗","咖琪"],
+    "妙齡瑞琪瓔玉隊":["妙齡","瑞琪","瓔玉"]
+  }
+};
+
+function pad(n){return String(n).padStart(2,"0");}
+function twToday(){var tw=new Date(new Date().toLocaleString("en-US",{timeZone:"Asia/Taipei"}));return tw.getFullYear()+"-"+pad(tw.getMonth()+1)+"-"+pad(tw.getDate());}
+function actDay(){var tw=new Date(new Date().toLocaleString("en-US",{timeZone:"Asia/Taipei"}));var d=Math.floor((tw-new Date(A_START+"T00:00:00"))/86400000);return(d>=0&&d<TOTAL)?d+1:null;}
+function actWeek(){var d=actDay();return d?Math.ceil(d/7):null;}
+function esc(s){return String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;");}
+
+var S={tab:"submit",data:{},records:{},adminOk:false,adminPw:"",cBig:"",cTeam:"",cName:"",photos:{},smsg:"",busy:false,et:{cBig:"",cTeam:"",name:"",from:"",to:""},emsg:"",viewBig:"",viewSort:"default",adminSel:{cBig:"",cTeam:""},adminSort:"default"};
+
+var DV="w3v1";
+DB.child("dv").once("value",function(vs){
+  if(vs.val()!==DV){DB.child("data").set(DEFAULT_DATA);DB.child("dv").set(DV);}
+});
+DB.child("data").on("value",function(s){
+  var val=s.val();
+  var bad=!val;
+  if(val)Object.keys(val).forEach(function(k){if(typeof val[k]!=="object"||!val[k])bad=true;});
+  if(bad)DB.child("data").set(DEFAULT_DATA);
+  else{S.data=val;R();}
+});
+DB.child("records").on("value",function(s){S.records=s.val()||{};R();});
+
+// 演示資料
+function seedRand(s){var h=0;for(var i=0;i<s.length;i++){h=((h<<5)-h+s.charCodeAt(i))|0;}return Math.abs(h%100)/100;}
+var TINY="data:image/svg+xml,"+encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" width="40" height="40"><rect width="40" height="40" fill="#ddd"/><circle cx="20" cy="20" r="10" fill="#aaa"/></svg>');
+var DemoV="w3demo1";
+DB.child("demov").once("value",function(vs){
+  if(vs.val()!==DemoV){
+    var recs={};
+    bigCs().forEach(function(b){
+      teamsOf(b).forEach(function(t){
+        membersOf(b,t).forEach(function(n){
+          var pk=b+"|"+t+"|"+n;
+          var pct=seedRand(pk);
+          recs[pk]={};
+          TASKS.forEach(function(tk){
+            var cnt=Math.round(tk.goal*pct);
+            for(var i=0;i<cnt;i++){
+              var d=new Date(A_START);d.setDate(d.getDate()+i);
+              var ds=d.toISOString().split("T")[0];
+              if(!recs[pk][ds])recs[pk][ds]={ts:"demo"};
+              recs[pk][ds][tk.key]=TINY;
+            }
+          });
+        });
+      });
+    });
+    DB.child("records").set(recs);
+    DB.child("demov").set(DemoV);
+  }
+});
+
+function bigCs(){return Object.keys(S.data);}
+function teamsOf(b){return S.data[b]?Object.keys(S.data[b]):[];}
+function membersOf(b,t){return(S.data[b]&&S.data[b][t])||[];}
+function pk(b,t,n){return b+"|"+t+"|"+n;}
+function tCnt(b,t,n,key){var r=S.records[pk(b,t,n)]||{};return Object.keys(r).filter(function(d){return d>=A_START&&d<=A_END&&r[d]&&r[d][key];}).length;}
+function pPct(b,t,n){var sum=0;TASKS.forEach(function(tk){sum+=Math.min(tCnt(b,t,n,tk.key)/tk.goal,1);});return sum/TASKS.length*100;}
+function tPct(b,t){var m=membersOf(b,t);if(!m.length)return 0;return m.reduce(function(x,n){return x+pPct(b,t,n);},0)/m.length;}
+function bPct(b){var all=[];teamsOf(b).forEach(function(t){membersOf(b,t).forEach(function(n){all.push({t:t,n:n});});});if(!all.length)return 0;return all.reduce(function(x,p){return x+pPct(b,p.t,p.n);},0)/all.length;}
+function allPpl(){return bigCs().flatMap(function(b){return teamsOf(b).flatMap(function(t){return membersOf(b,t).map(function(n){return{big:b,team:t,name:n};});});});}
+
+async function upload(file,b,t,n,key,date){
+  var base64,mime,ext;
+  if(file instanceof File){
+    base64=await new Promise(function(res,rej){var r=new FileReader();r.onload=function(e){res(e.target.result.split(",")[1]);};r.onerror=rej;r.readAsDataURL(file);});
+    mime=file.type||"image/jpeg";ext=mime.includes("png")?"png":"jpg";
+  }else if(typeof file==="string"&&file.startsWith("data:")){
+    var p=file.split(",");base64=p[1];mime=p[0].replace("data:","").replace(";base64","");ext=mime.includes("png")?"png":"jpg";
+  }else throw new Error("格式不支援");
+  var fn=[b,t,n,date,key].join("_").replace(/[|\\/\s]/g,"_")+"."+ext;
+  var fd=new FormData();fd.append("data",base64);fd.append("filename",fn);fd.append("mimeType",mime);
+  var res=await fetch(GAS,{method:"POST",body:fd});
+  var j=await res.json();
+  if(!j.success)throw new Error(j.error||"上傳失敗");
+  return j.url;
+}
+
+async function doSubmit(){
+  var today=twToday();
+  if(!S.cBig||!S.cTeam||!S.cName)return sm("⚠️ 請選擇大C、隊伍、姓名");
+  var key=pk(S.cBig,S.cTeam,S.cName);
+  if(S.records[key]&&S.records[key][today])return sm("⚠️ 今天已提交過囉！");
+  var ups=TASKS.filter(function(tk){return S.photos[tk.key];});
+  if(!ups.length)return sm("⚠️ 請至少上傳一項完成任務的照片");
+  S.busy=true;sm("上傳中（共"+ups.length+"張）⋯");
+  try{
+    var day={ts:new Date().toISOString()};
+    for(var i=0;i<ups.length;i++){
+      var tk=ups[i];
+      var url=await upload(S.photos[tk.key],S.cBig,S.cTeam,S.cName,tk.key,today);
+      day[tk.key]=url;sm("上傳中（"+(i+1)+"/"+ups.length+"）⋯");
+    }
+    await DB.child("records/"+key+"/"+today).set(day);
+    S.photos={};sm("🎉 今日任務已記錄！");
+  }catch(e){sm("❌ 上傳失敗："+e.message);}
+  S.busy=false;R();
+}
+function sm(m){S.smsg=m;R();}
+
+async function doMove(){
+  var b=S.et.cBig,t=S.et.cTeam,n=S.et.name,f=S.et.from,to=S.et.to;
+  if(!b||!t||!n||!f||!to)return em("⚠️ 請填寫完整欄位");
+  if(f===to)return em("⚠️ 日期相同");
+  var key=pk(b,t,n);
+  var rec=(S.records[key]||{})[f];
+  if(!rec)return em("⚠️ 來源日期沒有紀錄");
+  if((S.records[key]||{})[to])return em("⚠️ 目標日期已有紀錄");
+  await DB.child("records/"+key+"/"+to).set(Object.assign({},rec,{adminMoved:true}));
+  await DB.child("records/"+key+"/"+f).remove();
+  em("✅ 移動完成");S.et={cBig:"",cTeam:"",name:"",from:"",to:""};
+}
+function em(m){S.emsg=m;R();}
+async function delRec(key,date){await DB.child("records/"+key+"/"+date).remove();}
+function doLogin(){var el=document.getElementById("pwIn");if((el?el.value:"")=== ADMIN_PW){S.adminOk=true;R();}else alert("密碼錯誤");}
+
+function R(){document.getElementById("app").innerHTML=html();bind();}
+
+function clr(pct){return pct>=80?"#16a34a":pct>=50?"#0891b2":pct>=25?"#d97706":"#dc2626";}
+
+function html(){
+  var today=twToday(),day=actDay(),week=actWeek();
+  var h='<div class="bg-grid"></div><header class="hero">';
+  h+='<div class="hero-badge">⚔️ 五週挑戰</div>';
+  h+='<h1 class="hero-title">創業養成小組第二期</h1>';
+  h+='<p class="hero-desc">8/17 – 9/20｜五週挑戰｜每日任務 + 每週任務</p>';
+  h+='<div class="hero-day">'+(day?'🗡️ 第'+day+'天 / 第'+week+'週':'活動期間：8/17 – 9/20')+'</div>';
+  h+='</header><nav class="tabs">';
+  [{k:"submit",l:"⚔️ 提交任務"},{k:"view",l:"📊 查看進度"},{k:"admin",l:"🔑 管理員"}].forEach(function(t){
+    h+='<button class="tab'+(S.tab===t.k?" on":"")+'" id="tab_'+t.k+'">'+t.l+'</button>';
+  });
+  h+='</nav><main class="main">';
+  if(S.tab==="submit")h+=hSubmit(today);
+  else if(S.tab==="view")h+=hView();
+  else h+=hAdmin();
+  h+='</main><footer>創業養成小組第二期 ⚔️</footer>';
+  return h;
+}
+
+function hSubmit(today){
+  var key=S.cBig&&S.cTeam&&S.cName?pk(S.cBig,S.cTeam,S.cName):null;
+  var done=key&&S.records[key]&&S.records[key][today];
+  var bcs=bigCs();
+  var h='<div class="panel"><div class="ptitle">⚔️ 今日任務提交</div>';
+  h+='<div class="dbadge">📅 台灣時間今日：'+today+'</div>';
+  h+='<div style="margin-bottom:13px"><label class="flabel">選擇大Ｃ</label><select class="sel" id="selBig"><option value="">── 請選擇 ──</option>';
+  bcs.forEach(function(b){h+='<option value="'+esc(b)+'"'+(b===S.cBig?' selected':'')+'>'+esc(b)+'</option>';});
+  h+='</select></div>';
+  h+='<div style="margin-bottom:13px"><label class="flabel">選擇隊伍</label><select class="sel" id="selTeam"'+(!S.cBig?' disabled':'')+'><option value="">── 請選擇 ──</option>';
+  if(S.cBig)teamsOf(S.cBig).forEach(function(t){h+='<option value="'+esc(t)+'"'+(t===S.cTeam?' selected':'')+'>'+esc(t)+'</option>';});
+  h+='</select></div>';
+  h+='<div style="margin-bottom:18px"><label class="flabel">選擇你的名字</label><select class="sel" id="selName"'+(!S.cTeam?' disabled':'')+'><option value="">── 請選擇 ──</option>';
+  if(S.cBig&&S.cTeam)membersOf(S.cBig,S.cTeam).forEach(function(m){h+='<option value="'+esc(m)+'"'+(m===S.cName?' selected':'')+'>'+esc(m)+'</option>';});
+  h+='</select></div>';
+  if(key&&done){h+='<div class="done-msg">✅ '+esc(S.cName)+' 今天已提交！明天繼續💪</div>';}
+  if(key&&!done){
+    h+='<div class="tsec"><div class="tsec-title">📅 每日任務</div>';
+    DAILY.forEach(function(tk){h+=tRow(tk);});h+='</div>';
+    h+='<div class="tsec"><div class="tsec-title">📆 每週任務</div>';
+    WEEKLY.forEach(function(tk){h+=tRow(tk);});h+='</div>';
+    h+='<div class="hint">💡 做了哪項就上傳照片，沒做的不用傳。至少一項才能送出。每天限一次，過了台灣時間晚上12點算隔天。</div>';
+    h+='<button class="sbtn" id="submitBtn"'+(S.busy?' disabled':'')+'>'+( S.busy?'上傳中...':'⚔️ 送出今日任務')+'</button>';
+    if(S.smsg)h+='<div class="msg '+(S.smsg.startsWith('🎉')?'ok':'err')+'">'+esc(S.smsg)+'</div>';
+  }
+  h+='<div class="notice-box"><div class="notice-title">📌 注意事項</div>';
+  h+='<div class="notice-item">1. 一人一天只能上傳一次，建議把一天做完的事再上傳。</div>';
+  h+='<div class="notice-item">2. 上傳時間以台灣時間為主，過了晚上12點日期就會變成隔一天。</div>';
+  h+='<div class="notice-item">3. 上傳完成，畫面會顯示已上傳完成，也可在「查看進度」看到變化。</div>';
+  h+='<div class="notice-item">4. 上傳遇到任何問題，請洽「自己大Ｃ招募組副組長」。</div>';
+  h+='</div></div>';
+  return h;
+}
+
+function tRow(tk){
+  var cnt=S.cName?tCnt(S.cBig,S.cTeam,S.cName,tk.key):0;
+  var photo=S.photos[tk.key];
+  var h='<div class="titem"><div class="tic">'+tk.icon+'</div>';
+  h+='<div class="tinfo"><div class="tname">'+esc(tk.name)+'</div>';
+  h+='<div class="tgoal">目標：'+tk.goal+tk.unit+'　目前：'+cnt+tk.unit+'</div></div><div>';
+  if(photo){
+    var src2=photo instanceof File?URL.createObjectURL(photo):photo;
+    h+='<div class="pbox has"><img src="'+src2+'"><button class="pbox-rm" data-rm="'+tk.key+'">✕</button></div>';
+  }else{
+    h+='<div class="pbox" data-up="'+tk.key+'"><span class="pbox-ic">📷</span></div>';
+    h+='<input type="file" id="fi_'+tk.key+'" accept="image/*" style="display:none">';
+  }
+  h+='</div></div>';
+  return h;
+}
+
+function hView(){
+  var bcs=bigCs();
+  if(!bcs.length)return'<div class="panel"><div class="ptitle">📊 查看進度</div><div style="color:var(--mut);text-align:center;padding:40px">尚未設定名單</div></div>';
+  var h='<div class="panel"><div class="ptitle">📊 查看進度</div>';
+  h+='<div style="display:flex;gap:10px;margin-bottom:16px;flex-wrap:wrap;align-items:center">';
+  h+='<select class="sel sm" id="viewBigSel" style="flex:1;min-width:140px"><option value="">── 選擇大Ｃ ──</option>';
+  bcs.forEach(function(b){h+='<option value="'+esc(b)+'"'+(b===S.viewBig?' selected':'')+'>'+esc(b)+'</option>';});
+  h+='</select>';
+  h+='<button class="mbtn" id="sortBtn" style="font-size:12px;padding:7px 12px">'+(S.viewSort==="desc"?"🔽 高→低":S.viewSort==="asc"?"🔼 低→高":"↕️ 排序")+'</button>';
+  h+='</div>';
+  bcs.forEach(function(b){
+    var p=bPct(b);
+    h+='<div class="cblock"><div class="chead"><span class="cname">'+esc(b)+'</span><span class="cpct">'+Math.round(p)+'%</span></div>';
+    h+='<div class="pbar-track"><div class="pbar-fill" style="width:'+p+'%;background:'+clr(p)+'"></div></div></div>';
+  });
+  h+='<div style="border-top:1px solid var(--bdr);margin:14px 0"></div>';
+  if(!S.viewBig){
+    h+='<div style="color:var(--mut);text-align:center;padding:20px;font-size:13px">請選擇大Ｃ查看詳細進度</div>';
+  }else{
+    var ts=teamsOf(S.viewBig);
+    var td=ts.map(function(t){return{team:t,pct:tPct(S.viewBig,t),members:membersOf(S.viewBig,t)};});
+    if(S.viewSort==="desc")td.sort(function(a,b){return b.pct-a.pct;});
+    else if(S.viewSort==="asc")td.sort(function(a,b){return a.pct-b.pct;});
+    td.forEach(function(td){
+      var c=clr(td.pct);
+      h+='<div class="cblock"><div class="chead"><span class="cname" style="font-size:13px">'+esc(td.team)+'</span><span class="cpct">'+Math.round(td.pct)+'%</span></div>';
+      h+='<div class="pbar-track" style="height:8px;margin-bottom:12px"><div class="pbar-fill" style="width:'+td.pct+'%;background:'+c+'"></div></div>';
+      h+='<div class="mgrid">';
+      td.members.forEach(function(n){h+=mCard(S.viewBig,td.team,n);});
+      h+='</div></div>';
+    });
+  }
+  h+='</div>';
+  return h;
+}
+
+function mCard(b,t,n){
+  var p=pPct(b,t,n);var c=clr(p);
+  var key=pk(b,t,n);var rec=S.records[key]||{};
+  var h='<div class="mcard"><div class="mhead"><span class="mname">'+esc(n)+'</span><span class="mpct" style="color:'+c+'">'+Math.round(p)+'%</span></div>';
+  h+='<div class="pbar-track" style="height:7px;margin-bottom:9px"><div class="pbar-fill" style="width:'+p+'%;background:'+c+'"></div></div>';
+  TASKS.forEach(function(tk){
+    var cnt=tCnt(b,t,n,tk.key);
+    h+='<div class="mtask"><div class="mtlbl">'+tk.icon+' '+esc(tk.name.length>14?tk.name.substring(0,14)+'..':tk.name)+' '+cnt+'/'+tk.goal+tk.unit+'</div>';
+    h+='<div class="dots">';
+    for(var i=0;i<TOTAL;i++){
+      var d=new Date(A_START);d.setDate(d.getDate()+i);
+      var ds=d.toISOString().split("T")[0];
+      h+='<div class="dot'+(rec[ds]&&rec[ds][tk.key]?' on':'')+'" title="第'+(i+1)+'天"></div>';
+    }
+    h+='</div></div>';
+  });
+  h+='</div>';
+  return h;
+}
+
+function hAdmin(){
+  if(!S.adminOk){
+    return'<div class="panel"><div class="ptitle">🔑 管理員</div><div class="alogin"><input type="password" class="sel" id="pwIn" placeholder="輸入管理員密碼"><button class="sbtn" id="loginBtn">解鎖</button></div></div>';
+  }
+  var ap=allPpl();var bcs=bigCs();
+  var tci=ap.reduce(function(x,p){var r=S.records[pk(p.big,p.team,p.name)]||{};return x+Object.keys(r).filter(function(d){return d>=A_START&&d<=A_END;}).length;},0);
+  var h='<div class="panel"><div class="ptitle">🔑 管理員</div>';
+  h+='<div class="astats"><div class="astat"><div class="astat-n">'+ap.length+'</div><div class="astat-l">總人數</div></div>';
+  h+='<div class="astat"><div class="astat-n">'+tci+'</div><div class="astat-l">總打卡次數</div></div>';
+  h+='<div class="astat"><div class="astat-n">'+bcs.length+'</div><div class="astat-l">大Ｃ數</div></div></div>';
+
+  // 任務平均達成比例
+  function avgPct(ppl,key,goal){if(!ppl.length)return 0;return ppl.reduce(function(s,p){return s+Math.min(tCnt(p.big,p.team,p.name,key)/goal,1);},0)/ppl.length*100;}
+  function tTable(ppl,lbl){
+    h+='<div style="font-size:12px;color:var(--mut);margin:8px 0 6px">'+lbl+'（'+ppl.length+' 人）</div>';
+    h+='<table style="width:100%;border-collapse:collapse;font-size:12px;margin-bottom:10px">';
+    h+='<thead><tr style="background:rgba(0,0,0,.04)"><th style="padding:6px 10px;text-align:left">行為項目</th><th style="padding:6px 10px;text-align:center">平均達成</th><th style="padding:6px 10px;text-align:left;font-weight:400;color:var(--mut)">備註</th></tr></thead><tbody>';
+    TASKS.forEach(function(tk){
+      var p=avgPct(ppl,tk.key,tk.goal);var c=clr(p);
+      h+='<tr style="border-top:1px solid var(--bdr)"><td style="padding:6px 10px">'+tk.icon+' '+esc(tk.name)+'</td>';
+      h+='<td style="padding:6px 10px;text-align:center;font-family:var(--fh);font-size:14px;font-weight:700;color:'+c+'">'+Math.round(p)+'%</td>';
+      h+='<td style="padding:6px 10px;font-size:11px;color:var(--mut)">'+tk.goal+tk.unit+'目標</td></tr>';
+    });
+    h+='</tbody></table>';
+  }
+  h+='<div class="slbl">📈 各任務平均達成比例</div>';
+  h+='<details style="background:rgba(0,0,0,.02);border:1px solid var(--bdr);border-radius:12px;padding:14px;margin-bottom:16px" open>';
+  h+='<summary style="cursor:pointer;list-style:none;display:flex;justify-content:space-between;font-weight:700">';
+  h+='<span>🌍 全體統計</span><span style="font-size:11px;color:var(--mut);font-weight:400">▼ 展開各大Ｃ</span></summary>';
+  h+='<summary::-webkit-details-marker{display:none}</summary>';
+  tTable(ap,"全體");
+  bcs.forEach(function(b){
+    var bp=ap.filter(function(p){return p.big===b;});
+    h+='<details style="margin-bottom:6px"><summary style="cursor:pointer;font-size:13px;font-weight:700;padding:5px 0;list-style:none">▶ '+esc(b)+'</summary>';
+    tTable(bp,esc(b));h+='</details>';
+  });
+  h+='</details>';
+
+  // 各大C完成率
+  h+='<div class="slbl">📊 各大Ｃ完成率</div>';
+  bcs.forEach(function(b){var p=bPct(b);h+='<div style="margin-bottom:10px"><div style="font-size:13px;margin-bottom:4px">'+esc(b)+'　'+Math.round(p)+'%</div><div class="pbar-track" style="height:8px"><div class="pbar-fill" style="width:'+p+'%;background:'+clr(p)+'"></div></div></div>';});
+
+  // 選人員
+  h+='<div class="msec"><div class="slbl" style="margin-bottom:5px">👤 篩選人員</div>';
+  h+='<div style="font-size:11px;color:var(--mut);margin-bottom:10px">選大Ｃ/隊伍後逐人審核也會自動篩選</div>';
+  h+='<div class="mgrow"><div><div class="flabel">大Ｃ</div><select class="sel sm" id="adBig"><option value="">全部</option>';
+  bcs.forEach(function(b){h+='<option value="'+esc(b)+'"'+(b===S.adminSel.cBig?' selected':'')+'>'+esc(b)+'</option>';});
+  h+='</select></div><div><div class="flabel">隊伍</div><select class="sel sm" id="adTeam"><option value="">全部</option>';
+  if(S.adminSel.cBig)teamsOf(S.adminSel.cBig).forEach(function(t){h+='<option value="'+esc(t)+'"'+(t===S.adminSel.cTeam?' selected':'')+'>'+esc(t)+'</option>';});
+  h+='</select></div></div></div>';
+
+  // 移動日期
+  var mopts='<option value="">請選擇</option>';
+  bcs.forEach(function(b){mopts+='<optgroup label="'+esc(b)+'">';teamsOf(b).forEach(function(t){membersOf(b,t).forEach(function(n){mopts+='<option value="'+esc(pk(b,t,n))+'">'+esc(n)+' ('+esc(t)+')</option>';});});mopts+='</optgroup>';});
+  h+='<div class="msec"><div class="slbl">🗓️ 移動紀錄日期</div><div class="mgrow">';
+  h+='<div><div class="flabel">姓名</div><select class="sel sm" id="etPK">'+mopts+'</select></div>';
+  h+='<div><div class="flabel">來源日期</div><input type="date" class="sel sm" id="etF" value="'+S.et.from+'"></div>';
+  h+='<div><div class="flabel">移至日期</div><input type="date" class="sel sm" id="etT" value="'+S.et.to+'"></div>';
+  h+='<div><button class="mbtn" id="moveBtn">移動</button></div></div>';
+  if(S.emsg)h+='<div class="msg '+(S.emsg.startsWith('✅')?'ok':'err')+'" style="margin-top:8px">'+esc(S.emsg)+'</div>';
+  h+='</div>';
+
+  // 逐人審核
+  var sl=S.adminSort==="desc"?"🔽 天數高→低":S.adminSort==="asc"?"🔼 天數低→高":"↕️ 依完成天數排序";
+  h+='<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">';
+  h+='<div class="slbl" style="margin-bottom:0">📷 逐人審核'+(S.adminSel.cBig?'　── '+esc(S.adminSel.cBig)+(S.adminSel.cTeam?' / '+esc(S.adminSel.cTeam):''):'')+'</div>';
+  h+='<button class="mbtn" id="adminSortBtn" style="font-size:12px;padding:6px 12px">'+sl+'</button></div>';
+  var filtered=ap.filter(function(p){
+    if(S.adminSel.cBig&&p.big!==S.adminSel.cBig)return false;
+    if(S.adminSel.cTeam&&p.team!==S.adminSel.cTeam)return false;
+    return true;
+  }).map(function(p){var r=S.records[pk(p.big,p.team,p.name)]||{};var days=Object.keys(r).filter(function(d){return d>=A_START&&d<=A_END;}).length;return{big:p.big,team:p.team,name:p.name,days:days};});
+  if(S.adminSort==="desc")filtered.sort(function(a,b){return b.days-a.days;});
+  else if(S.adminSort==="asc")filtered.sort(function(a,b){return a.days-b.days;});
+  var any=false;
+  filtered.forEach(function(p){
+    var key2=pk(p.big,p.team,p.name);var rec=S.records[key2]||{};
+    var dates=Object.keys(rec).sort();if(!dates.length)return;any=true;
+    h+='<details class="amem"><summary>'+esc(p.name)+' <span class="atag">'+esc(p.big)+' / '+esc(p.team)+'</span><span class="acnt">'+p.days+' 天</span></summary>';
+    dates.forEach(function(date){
+      var r=rec[date];
+      h+='<div class="aday"><div class="aday-row"><span>📅 '+date+'</span>';
+      if(r.adminMoved)h+='<span style="font-size:10px;color:var(--acc)">已移動</span>';
+      h+='<button class="dbtn" data-dpk="'+esc(key2)+'" data-dd="'+date+'">🗑️ 刪除</button></div>';
+      h+='<div style="display:flex;flex-wrap:wrap">';
+      TASKS.forEach(function(tk){if(r[tk.key])h+='<a href="'+r[tk.key]+'" target="_blank" class="ttag">'+tk.icon+' '+esc(tk.name.length>8?tk.name.substring(0,8)+'..':tk.name)+' 🔍</a>';});
+      h+='</div></div>';
+    });
+    h+='</details>';
+  });
+  if(!any)h+='<div style="color:var(--mut);font-size:13px;padding:16px 0">目前無人打卡</div>';
+  h+='</div>';
+  return h;
+}
+
+function bind(){
+  ["submit","view","admin"].forEach(function(k){var el=document.getElementById("tab_"+k);if(el)el.addEventListener("click",function(){S.tab=k;R();});});
+  var sb=document.getElementById("selBig");if(sb)sb.addEventListener("change",function(){S.cBig=this.value;S.cTeam="";S.cName="";S.photos={};S.smsg="";R();});
+  var st=document.getElementById("selTeam");if(st)st.addEventListener("change",function(){S.cTeam=this.value;S.cName="";S.photos={};S.smsg="";R();});
+  var sn=document.getElementById("selName");if(sn)sn.addEventListener("change",function(){S.cName=this.value;S.photos={};S.smsg="";R();});
+  document.querySelectorAll("[data-up]").forEach(function(box){box.addEventListener("click",function(){var fi=document.getElementById("fi_"+this.dataset.up);if(fi)fi.click();});});
+  document.querySelectorAll("input[id^='fi_']").forEach(function(fi){var k=fi.id.replace("fi_","");fi.addEventListener("change",function(){var f=this.files[0];if(!f)return;var r=new FileReader();r.onload=function(e){S.photos[k]=e.target.result;R();};r.readAsDataURL(f);});});
+  document.querySelectorAll("[data-rm]").forEach(function(btn){btn.addEventListener("click",function(ev){ev.stopPropagation();delete S.photos[this.dataset.rm];R();});});
+  var sub=document.getElementById("submitBtn");if(sub)sub.addEventListener("click",doSubmit);
+  var pw=document.getElementById("pwIn");var lb=document.getElementById("loginBtn");
+  if(pw)pw.addEventListener("keydown",function(e){if(e.key==="Enter")doLogin();});
+  if(lb)lb.addEventListener("click",doLogin);
+  var vbs=document.getElementById("viewBigSel");if(vbs)vbs.addEventListener("change",function(){S.viewBig=this.value;S.viewSort="default";R();});
+  var sortBtn=document.getElementById("sortBtn");if(sortBtn)sortBtn.addEventListener("click",function(){S.viewSort=S.viewSort==="default"?"desc":S.viewSort==="desc"?"asc":"default";R();});
+  var adBig=document.getElementById("adBig");var adTeam=document.getElementById("adTeam");
+  if(adBig)adBig.addEventListener("change",function(){S.adminSel.cBig=this.value;S.adminSel.cTeam="";R();});
+  if(adTeam)adTeam.addEventListener("change",function(){S.adminSel.cTeam=this.value;R();});
+  var etPK=document.getElementById("etPK");var etF=document.getElementById("etF");var etT=document.getElementById("etT");var mvb=document.getElementById("moveBtn");
+  if(etPK)etPK.addEventListener("change",function(){var p=this.value.split("|");if(p.length===3){S.et.cBig=p[0];S.et.cTeam=p[1];S.et.name=p[2];}});
+  if(etF)etF.addEventListener("change",function(){S.et.from=this.value;});
+  if(etT)etT.addEventListener("change",function(){S.et.to=this.value;});
+  if(mvb)mvb.addEventListener("click",doMove);
+  var asb=document.getElementById("adminSortBtn");if(asb)asb.addEventListener("click",function(){S.adminSort=S.adminSort==="default"?"desc":S.adminSort==="desc"?"asc":"default";R();});
+  document.querySelectorAll("[data-dpk]").forEach(function(btn){btn.addEventListener("click",function(){delRec(this.dataset.dpk,this.dataset.dd);});});
+}
+</script>
+</body>
+</html>
