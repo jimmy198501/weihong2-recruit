@@ -119,6 +119,11 @@ body{background:var(--bg);color:var(--txt);font-family:var(--fb);min-height:100v
 .msec{background:rgba(224,138,30,.06);border:1px solid rgba(224,138,30,.2);border-radius:12px;padding:14px;margin-bottom:16px}
 .mgrow{display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end;margin-top:10px}
 .mgrow>div{display:flex;flex-direction:column;gap:5px}
+.xq-reward-box{margin-bottom:18px;background:rgba(224,138,30,.08);border:2px solid rgba(224,138,30,.3);border-radius:16px;padding:14px 16px;}
+.xq-reward-title{font-size:13px;font-weight:700;color:#b86a00;margin-bottom:10px;display:flex;align-items:center;gap:6px;}
+.xq-reward-item{font-size:12px;color:var(--txt);padding:5px 0;border-top:1px solid rgba(224,138,30,.15);}
+.xq-reward-item:first-of-type{border-top:none;}
+.xq-reward-item strong{color:#b86a00;}
 .mbtn{padding:8px 16px;background:linear-gradient(135deg,#5a9e2f,#3a7a1e);border:none;border-radius:12px;color:#fff;font-family:var(--fb);font-size:13px;font-weight:700;cursor:pointer;white-space:nowrap;box-shadow:0 3px 0 #2d5a1e;transition:all .15s;}
 .mbtn:hover{transform:translateY(-1px);}
 footer{position:relative;z-index:1;text-align:center;padding:18px;font-size:12px;color:var(--mut);border-top:2px solid var(--bdr);background:#e8f5d0;}
@@ -139,22 +144,56 @@ firebase.initializeApp({
 var DB=firebase.database().ref("weihong3");
 var GAS="https://script.google.com/macros/s/AKfycbw8JkqgaWt5ptaP6mnVZvegW6za_pM15yi0arvZvDm-1-TkPdkqedTWNq8lElwsEDMw/exec";
 var ADMIN_PW="jimmy0117";
-var A_START="2026-08-17";
-var A_END="2026-09-20";
-var TOTAL=35;
+var A_START="2026-08-24";
+var A_END="2026-09-28";
+var TOTAL=36;
 
-var DAILY=[
-  {key:"join",icon:"👥",name:"入群1位或陌開10位截圖",goal:25,unit:"天",type:"daily"},
-  {key:"bv",icon:"🧪",name:"BV試用分享",goal:25,unit:"天",type:"daily"}
+// 任務依大C分開定義
+// 香綺大C：全部每週任務，無每日
+var TASKS_XQ=[
+  {key:"xq_join",  icon:"👥", name:"新增群友1人或陌開10位", goal:5, unit:"次", type:"weekly"},
+  {key:"xq_bv",   icon:"🧪", name:"BV自用分享在群組",       goal:5, unit:"次", type:"weekly"},
+  {key:"xq_home", icon:"🏠", name:"居購或市調",             goal:3, unit:"次", type:"weekly"},
+  {key:"xq_push", icon:"📋", name:"名單推進或私聊",         goal:3, unit:"次", type:"weekly"},
 ];
-var WEEKLY=[
-  {key:"link",icon:"🤝",name:"強連結",goal:5,unit:"次",type:"weekly"},
-  {key:"script",icon:"📝",name:"跑BV或IBV劇本",goal:5,unit:"次",type:"weekly"},
-  {key:"steps",icon:"🚶",name:"皮克敏/手機計步3000步",goal:5,unit:"次",type:"weekly"},
-  {key:"home",icon:"🏠",name:"線上居購或送居購邀請",goal:5,unit:"次",type:"weekly"},
-  {key:"share",icon:"💬",name:"大C分享活動執行心得",goal:5,unit:"次",type:"weekly"}
+// 婷芝大C：每日2 + 每週4（無計步）
+var TASKS_TZ=[
+  {key:"join",   icon:"👥", name:"入群1位或陌開10位截圖", goal:25, unit:"天", type:"daily"},
+  {key:"bv",     icon:"🧪", name:"BV試用分享",           goal:25, unit:"天", type:"daily"},
+  {key:"link",   icon:"🤝", name:"強連結",               goal:5,  unit:"次", type:"weekly"},
+  {key:"script", icon:"📝", name:"跑BV或IBV劇本",        goal:5,  unit:"次", type:"weekly"},
+  {key:"home",   icon:"🏠", name:"線上居購或送居購邀請", goal:5,  unit:"次", type:"weekly"},
+  {key:"share",  icon:"💬", name:"大C分享活動執行心得",  goal:5,  unit:"次", type:"weekly"},
 ];
-var TASKS=DAILY.concat(WEEKLY);
+// 子林大C：每日2 + 每週5（含計步）
+var TASKS_ZL=[
+  {key:"join",   icon:"👥", name:"入群1位或陌開10位截圖",     goal:25, unit:"天", type:"daily"},
+  {key:"bv",     icon:"🧪", name:"BV試用分享",               goal:25, unit:"天", type:"daily"},
+  {key:"link",   icon:"🤝", name:"強連結",                   goal:5,  unit:"次", type:"weekly"},
+  {key:"script", icon:"📝", name:"跑BV或IBV劇本",            goal:5,  unit:"次", type:"weekly"},
+  {key:"steps",  icon:"🚶", name:"皮克敏/手機計步3000步",    goal:5,  unit:"次", type:"weekly"},
+  {key:"home",   icon:"🏠", name:"線上居購或送居購邀請",     goal:5,  unit:"次", type:"weekly"},
+  {key:"share",  icon:"💬", name:"大C分享活動執行心得",      goal:5,  unit:"次", type:"weekly"},
+];
+
+// 香綺大C 獎勵規則
+var XQ_REWARDS=[
+  {icon:"☕", name:"每週咖啡獎勵", desc:"四項每週都完成目標"},
+  {icon:"☕", name:"三人同行咖啡", desc:"三人一起完成任務"},
+  {icon:"☕", name:"商展評估咖啡", desc:"有商展評估"},
+  {icon:"🎁", name:"締結送汗蒸幕券", desc:"締結新創業家直接送！"},
+];
+
+// 依大C取得任務清單
+function tasksFor(big){
+  if(big==="香綺大C") return TASKS_XQ;
+  if(big==="婷芝大C") return TASKS_TZ;
+  return TASKS_ZL;
+}
+// 舊有程式碼相容：TASKS 用子林的（最完整）
+var TASKS=TASKS_ZL;
+var DAILY=TASKS_ZL.filter(function(t){return t.type==="daily";});
+var WEEKLY=TASKS_ZL.filter(function(t){return t.type==="weekly";});
 
 var DEFAULT_DATA={
   "香綺大C":{
@@ -208,7 +247,7 @@ function esc(s){return String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;").repl
 
 var S={tab:"submit",data:{},records:{},adminOk:false,adminPw:"",cBig:"",cTeam:"",cName:"",photos:{},smsg:"",busy:false,et:{cBig:"",cTeam:"",name:"",from:"",to:""},emsg:"",viewBig:"",viewSort:"default",adminSel:{cBig:"",cTeam:""},adminSort:"default"};
 
-var DV="w3v1";
+var DV="w3v2";
 DB.child("dv").once("value",function(vs){
   if(vs.val()!==DV){DB.child("data").set(DEFAULT_DATA);DB.child("dv").set(DV);}
 });
@@ -224,7 +263,7 @@ DB.child("records").on("value",function(s){S.records=s.val()||{};R();});
 // 演示資料
 function seedRand(s){var h=0;for(var i=0;i<s.length;i++){h=((h<<5)-h+s.charCodeAt(i))|0;}return Math.abs(h%100)/100;}
 var TINY="data:image/svg+xml,"+encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" width="40" height="40"><rect width="40" height="40" fill="#ddd"/><circle cx="20" cy="20" r="10" fill="#aaa"/></svg>');
-var DemoV="w3demo1";
+var DemoV="w3demo2";
 DB.child("demov").once("value",function(vs){
   if(vs.val()!==DemoV){
     var recs={};
@@ -234,7 +273,7 @@ DB.child("demov").once("value",function(vs){
           var pk=b+"|"+t+"|"+n;
           var pct=seedRand(pk);
           recs[pk]={};
-          TASKS.forEach(function(tk){
+          tasksFor(b).forEach(function(tk){
             var cnt=Math.round(tk.goal*pct);
             for(var i=0;i<cnt;i++){
               var d=new Date(A_START);d.setDate(d.getDate()+i);
@@ -256,7 +295,7 @@ function teamsOf(b){return S.data[b]?Object.keys(S.data[b]):[];}
 function membersOf(b,t){return(S.data[b]&&S.data[b][t])||[];}
 function pk(b,t,n){return b+"|"+t+"|"+n;}
 function tCnt(b,t,n,key){var r=S.records[pk(b,t,n)]||{};return Object.keys(r).filter(function(d){return d>=A_START&&d<=A_END&&r[d]&&r[d][key];}).length;}
-function pPct(b,t,n){var sum=0;TASKS.forEach(function(tk){sum+=Math.min(tCnt(b,t,n,tk.key)/tk.goal,1);});return sum/TASKS.length*100;}
+function pPct(b,t,n){var tasks=tasksFor(b);var sum=0;tasks.forEach(function(tk){sum+=Math.min(tCnt(b,t,n,tk.key)/tk.goal,1);});return sum/tasks.length*100;}
 function tPct(b,t){var m=membersOf(b,t);if(!m.length)return 0;return m.reduce(function(x,n){return x+pPct(b,t,n);},0)/m.length;}
 function bPct(b){var all=[];teamsOf(b).forEach(function(t){membersOf(b,t).forEach(function(n){all.push({t:t,n:n});});});if(!all.length)return 0;return all.reduce(function(x,p){return x+pPct(b,p.t,p.n);},0)/all.length;}
 function allPpl(){return bigCs().flatMap(function(b){return teamsOf(b).flatMap(function(t){return membersOf(b,t).map(function(n){return{big:b,team:t,name:n};});});});}
@@ -325,7 +364,7 @@ function html(){
   h+='<div class="hero-badge">🌿 五週挑戰</div>';
   h+='<span class="hero-pikmin">🌱👾🌿</span>';
   h+='<h1 class="hero-title">創業養成小組第二期</h1>';
-  h+='<p class="hero-desc">8/17 – 9/20｜五週挑戰｜每日任務 + 每週任務</p>';
+  h+='<p class="hero-desc">8/24 – 9/28｜五週挑戰｜每日+每週任務</p>';
   h+='<div class="hero-day">'+(day?'🗡️ 第'+day+'天 / 第'+week+'週':'🌿 活動期間：8/17 – 9/20')+'</div>';
   h+='</header><nav class="tabs">';
   [{k:"submit",l:"⚔️ 提交任務"},{k:"view",l:"📊 查看進度"},{k:"admin",l:"🔑 管理員"}].forEach(function(t){
@@ -356,10 +395,24 @@ function hSubmit(today){
   h+='</select></div>';
   if(key&&done){h+='<div class="done-msg">✅ '+esc(S.cName)+' 今天已提交！明天繼續💪</div>';}
   if(key&&!done){
-    h+='<div class="tsec"><div class="tsec-title">📅 每日任務</div>';
-    DAILY.forEach(function(tk){h+=tRow(tk);});h+='</div>';
-    h+='<div class="tsec"><div class="tsec-title">📆 每週任務</div>';
-    WEEKLY.forEach(function(tk){h+=tRow(tk);});h+='</div>';
+    var myTasks=tasksFor(S.cBig);
+    var myDaily=myTasks.filter(function(t){return t.type==="daily";});
+    var myWeekly=myTasks.filter(function(t){return t.type==="weekly";});
+    if(myDaily.length){
+      h+='<div class="tsec"><div class="tsec-title">🌞 每日任務</div>';
+      myDaily.forEach(function(tk){h+=tRow(tk);});h+='</div>';
+    }
+    if(myWeekly.length){
+      h+='<div class="tsec"><div class="tsec-title">🌿 每週任務</div>';
+      myWeekly.forEach(function(tk){h+=tRow(tk);});h+='</div>';
+    }
+    if(S.cBig==="香綺大C"){
+      h+='<div class="xq-reward-box"><div class="xq-reward-title">🎁 香綺大C專屬獎勵</div>';
+      XQ_REWARDS.forEach(function(r){
+        h+='<div class="xq-reward-item">'+r.icon+' <strong>'+r.name+'</strong>　<span>'+r.desc+'</span></div>';
+      });
+      h+='</div>';
+    }
     h+='<div class="hint">💡 做了哪項就上傳照片，沒做的不用傳。至少一項才能送出。每天限一次，過了台灣時間晚上12點算隔天。</div>';
     h+='<button class="sbtn" id="submitBtn"'+(S.busy?' disabled':'')+'>'+( S.busy?'上傳中...':'⚔️ 送出今日任務')+'</button>';
     if(S.smsg)h+='<div class="msg '+(S.smsg.startsWith('🎉')?'ok':'err')+'">'+esc(S.smsg)+'</div>';
@@ -403,7 +456,15 @@ function hView(){
   bcs.forEach(function(b){
     var p=bPct(b);
     h+='<div class="cblock"><div class="chead"><span class="cname">'+esc(b)+'</span><span class="cpct">'+Math.round(p)+'%</span></div>';
-    h+='<div class="pbar-track"><div class="pbar-fill" style="width:'+p+'%;background:'+clr(p)+'"></div></div></div>';
+    h+='<div class="pbar-track"><div class="pbar-fill" style="width:'+p+'%;background:'+clr(p)+'"></div></div>';
+    if(b==="香綺大C"){
+      h+='<div style="margin-top:10px;padding-top:10px;border-top:1px dashed rgba(224,138,30,.3)">';
+      XQ_REWARDS.forEach(function(r){
+        h+='<div style="font-size:11px;color:#b86a00;padding:2px 0">'+r.icon+' '+r.name+'　<span style="color:var(--mut)">'+r.desc+'</span></div>';
+      });
+      h+='</div>';
+    }
+    h+='</div>';
   });
   h+='<div style="border-top:1px solid var(--bdr);margin:14px 0"></div>';
   if(!S.viewBig){
@@ -431,7 +492,8 @@ function mCard(b,t,n){
   var key=pk(b,t,n);var rec=S.records[key]||{};
   var h='<div class="mcard"><div class="mhead"><span class="mname">'+esc(n)+'</span><span class="mpct" style="color:'+c+'">'+Math.round(p)+'%</span></div>';
   h+='<div class="pbar-track" style="height:7px;margin-bottom:9px"><div class="pbar-fill" style="width:'+p+'%;background:'+c+'"></div></div>';
-  TASKS.forEach(function(tk){
+  var cardTasks=tasksFor(b);
+  cardTasks.forEach(function(tk){
     var cnt=tCnt(b,t,n,tk.key);
     h+='<div class="mtask"><div class="mtlbl">'+tk.icon+' '+esc(tk.name.length>14?tk.name.substring(0,14)+'..':tk.name)+' '+cnt+'/'+tk.goal+tk.unit+'</div>';
     h+='<div class="dots">';
@@ -463,7 +525,8 @@ function hAdmin(){
     h+='<div style="font-size:12px;color:var(--mut);margin:8px 0 6px">'+lbl+'（'+ppl.length+' 人）</div>';
     h+='<table style="width:100%;border-collapse:collapse;font-size:12px;margin-bottom:10px">';
     h+='<thead><tr style="background:rgba(0,0,0,.04)"><th style="padding:6px 10px;text-align:left">行為項目</th><th style="padding:6px 10px;text-align:center">平均達成</th><th style="padding:6px 10px;text-align:left;font-weight:400;color:var(--mut)">備註</th></tr></thead><tbody>';
-    TASKS.forEach(function(tk){
+    var aTasks=(lbl.indexOf("香綺")>-1)?TASKS_XQ:(lbl.indexOf("婷芝")>-1)?TASKS_TZ:(lbl.indexOf("全體")>-1)?TASKS_ZL:tasksFor(lbl.replace(/（.*）/,"").trim());
+    aTasks.forEach(function(tk){
       var p=avgPct(ppl,tk.key,tk.goal);var c=clr(p);
       h+='<tr style="border-top:1px solid var(--bdr)"><td style="padding:6px 10px">'+tk.icon+' '+esc(tk.name)+'</td>';
       h+='<td style="padding:6px 10px;text-align:center;font-family:var(--fh);font-size:14px;font-weight:700;color:'+c+'">'+Math.round(p)+'%</td>';
