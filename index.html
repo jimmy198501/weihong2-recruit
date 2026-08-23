@@ -261,8 +261,6 @@ DB.child("data").on("value",function(s){
 DB.child("records").on("value",function(s){S.records=s.val()||{};R();});
 
 // 演示資料已清除（正式版）
-  }
-});
 
 function bigCs(){return Object.keys(S.data);}
 function teamsOf(b){return S.data[b]?Object.keys(S.data[b]):[];}
