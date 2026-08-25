@@ -326,6 +326,13 @@ function em(m){S.emsg=m;R();}
 async function delRec(key,date){await DB.child("records/"+key+"/"+date).remove();}
 function doLogin(){var el=document.getElementById("pwIn");if((el?el.value:"")=== ADMIN_PW){S.adminOk=true;R();}else alert("密碼錯誤");}
 
+function pickPhoto(key){
+  var fi=document.getElementById("fi_"+key);
+  if(fi)fi.click();
+}
+function rmPhoto(key){
+  delete S.photos[key];R();
+}
 function R(){document.getElementById("app").innerHTML=html();bind();}
 
 function clr(pct){return pct>=80?"#16a34a":pct>=50?"#0891b2":pct>=25?"#d97706":"#dc2626";}
@@ -406,9 +413,9 @@ function tRow(tk){
   h+='<div class="tgoal">目標：'+tk.goal+tk.unit+'　目前：'+cnt+tk.unit+'</div></div><div>';
   if(photo){
     var src2=photo instanceof File?URL.createObjectURL(photo):photo;
-    h+='<div class="pbox has"><img src="'+src2+'"><button class="pbox-rm" data-rm="'+tk.key+'">✕</button></div>';
+    h+='<div class="pbox has"><img src="'+src2+'"><button class="pbox-rm" id="rm_'+tk.key+'" onclick="rmPhoto(\''+tk.key+'\')">✕</button></div>';
   }else{
-    h+='<div class="pbox" data-up="'+tk.key+'"><span class="pbox-ic">📷</span></div>';
+    h+='<div class="pbox" id="pb_'+tk.key+'" onclick="pickPhoto(\''+tk.key+'\')"><span class="pbox-ic">📷</span></div>';
     h+='<input type="file" id="fi_'+tk.key+'" accept="image/*" style="display:none">';
   }
   h+='</div></div>';
@@ -581,9 +588,20 @@ function bind(){
   var sb=document.getElementById("selBig");if(sb)sb.addEventListener("change",function(){S.cBig=this.value;S.cTeam="";S.cName="";S.photos={};S.smsg="";R();});
   var st=document.getElementById("selTeam");if(st)st.addEventListener("change",function(){S.cTeam=this.value;S.cName="";S.photos={};S.smsg="";R();});
   var sn=document.getElementById("selName");if(sn)sn.addEventListener("change",function(){S.cName=this.value;S.photos={};S.smsg="";R();});
-  document.querySelectorAll("[data-up]").forEach(function(box){box.addEventListener("click",function(){var fi=document.getElementById("fi_"+this.dataset.up);if(fi)fi.click();});});
-  document.querySelectorAll("input[id^='fi_']").forEach(function(fi){var k=fi.id.replace("fi_","");fi.addEventListener("change",function(){var f=this.files[0];if(!f)return;var r=new FileReader();r.onload=function(e){S.photos[k]=e.target.result;R();};r.readAsDataURL(f);});});
-  document.querySelectorAll("[data-rm]").forEach(function(btn){btn.addEventListener("click",function(ev){ev.stopPropagation();delete S.photos[this.dataset.rm];R();});});
+  // 照片格子 click → 觸發 file input
+  document.querySelectorAll("[id^='pb_']").forEach(function(box){
+    var key=box.id.replace("pb_","");
+    var fi=document.getElementById("fi_"+key);
+    if(fi){
+      fi.onchange=function(){
+        var f=this.files[0];
+        if(!f)return;
+        var reader=new FileReader();
+        reader.onload=function(ev){S.photos[key]=ev.target.result;R();};
+        reader.readAsDataURL(f);
+      };
+    }
+  });
   var sub=document.getElementById("submitBtn");if(sub)sub.addEventListener("click",doSubmit);
   var pw=document.getElementById("pwIn");var lb=document.getElementById("loginBtn");
   if(pw)pw.addEventListener("keydown",function(e){if(e.key==="Enter")doLogin();});
