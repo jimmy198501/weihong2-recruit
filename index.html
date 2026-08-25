@@ -293,7 +293,8 @@ async function doSubmit(){
   if(!S.cBig||!S.cTeam||!S.cName)return sm("⚠️ 請選擇大C、隊伍、姓名");
   var key=pk(S.cBig,S.cTeam,S.cName);
   if(S.records[key]&&S.records[key][today])return sm("⚠️ 今天已提交過囉！");
-  var ups=TASKS.filter(function(tk){return S.photos[tk.key];});
+  var myTasks=tasksFor(S.cBig);
+  var ups=myTasks.filter(function(tk){return S.photos[tk.key];});
   if(!ups.length)return sm("⚠️ 請至少上傳一項完成任務的照片");
   S.busy=true;sm("上傳中（共"+ups.length+"張）⋯");
   try{
