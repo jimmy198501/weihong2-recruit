@@ -492,7 +492,9 @@ function mCard(b,t,n){
   var cardTasks=tasksFor(b);
   cardTasks.forEach(function(tk){
     var cnt=tCnt(b,t,n,tk.key);
-    h+='<div class="mtask"><div class="mtlbl">'+tk.icon+' '+esc(tk.name.length>14?tk.name.substring(0,14)+'..':tk.name)+' '+cnt+'/'+tk.goal+tk.unit+'</div>';
+    // 子林大C 計步：顯示累積次數/15次（5週×3次總目標）
+    var dispGoal = (b==="子林大C" && tk.key==="steps") ? 15 : tk.goal;
+    h+='<div class="mtask"><div class="mtlbl">'+tk.icon+' '+esc(tk.name.length>14?tk.name.substring(0,14)+'..':tk.name)+' '+cnt+'/'+dispGoal+tk.unit+'</div>';
     h+='<div class="dots">';
     for(var i=0;i<TOTAL;i++){
       var d=new Date(A_START);d.setDate(d.getDate()+i);
