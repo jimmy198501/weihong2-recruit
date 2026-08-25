@@ -426,9 +426,11 @@ function hSubmit(today){
 function tRow(tk){
   var cnt=S.cName?tCnt(S.cBig,S.cTeam,S.cName,tk.key):0;
   var photo=S.photos[tk.key];
+  // 子林大C 計步：顯示總目標15次（5週×3次）
+  var dispGoal=(S.cBig==="子林大C"&&tk.key==="steps")?15:tk.goal;
   var h='<div class="titem"><div class="tic">'+tk.icon+'</div>';
   h+='<div class="tinfo"><div class="tname">'+esc(tk.name)+'</div>';
-  h+='<div class="tgoal">目標：'+tk.goal+tk.unit+'　目前：'+cnt+tk.unit+'</div></div><div>';
+  h+='<div class="tgoal">目標：'+dispGoal+tk.unit+'　目前：'+cnt+tk.unit+'</div></div><div>';
   if(photo){
     var src2=photo instanceof File?URL.createObjectURL(photo):photo;
     h+='<div class="pbox has"><img src="'+src2+'"><button class="pbox-rm" id="rm_'+tk.key+'" onclick="rmPhoto(\''+tk.key+'\')">✕</button></div>';
