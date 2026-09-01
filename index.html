@@ -267,6 +267,16 @@ function teamsOf(b){return S.data[b]?Object.keys(S.data[b]):[];}
 function membersOf(b,t){return(S.data[b]&&S.data[b][t])||[];}
 function pk(b,t,n){return b+"|"+t+"|"+n;}
 function tCnt(b,t,n,key){var r=S.records[pk(b,t,n)]||{};return Object.keys(r).filter(function(d){return d>=A_START&&d<=A_END&&r[d]&&r[d][key];}).length;}
+function tCntWeek(b,t,n,key){
+  var r=S.records[pk(b,t,n)]||{};
+  var tw=new Date(new Date().toLocaleString("en-US",{timeZone:"Asia/Taipei"}));
+  var day=tw.getDay();var diffToMon=day===0?-6:1-day;
+  var mon=new Date(tw);mon.setDate(tw.getDate()+diffToMon);
+  var sun=new Date(mon);sun.setDate(mon.getDate()+6);
+  function fmt(d){return d.getFullYear()+"-"+pad(d.getMonth()+1)+"-"+pad(d.getDate());}
+  var m=fmt(mon);var s=fmt(sun);
+  return Object.keys(r).filter(function(d){return d>=m&&d<=s&&r[d]&&r[d][key];}).length;
+}
 function pPct(b,t,n){var tasks=tasksFor(b);var sum=0;tasks.forEach(function(tk){sum+=Math.min(tCnt(b,t,n,tk.key)/tk.goal,1);});return sum/tasks.length*100;}
 function tPct(b,t){var m=membersOf(b,t);if(!m.length)return 0;return m.reduce(function(x,n){return x+pPct(b,t,n);},0)/m.length;}
 function bPct(b){var all=[];teamsOf(b).forEach(function(t){membersOf(b,t).forEach(function(n){all.push({t:t,n:n});});});if(!all.length)return 0;return all.reduce(function(x,p){return x+pPct(b,p.t,p.n);},0)/all.length;}
@@ -430,7 +440,9 @@ function tRow(tk){
   var dispGoal=(S.cBig==="子林大C"&&tk.key==="steps")?15:tk.goal;
   var h='<div class="titem"><div class="tic">'+tk.icon+'</div>';
   h+='<div class="tinfo"><div class="tname">'+esc(tk.name)+'</div>';
-  h+='<div class="tgoal">目標：'+dispGoal+tk.unit+'　目前：'+cnt+tk.unit+'</div></div><div>';
+  var showCnt=(S.cBig==="香綺大C"&&tk.type==="weekly"&&S.cName)?tCntWeek(S.cBig,S.cTeam,S.cName,tk.key):cnt;
+  var showLbl=(S.cBig==="香綺大C"&&tk.type==="weekly")?"本週：":"目前：";
+  h+='<div class="tgoal">目標：'+dispGoal+tk.unit+'　'+showLbl+showCnt+tk.unit+'</div></div><div>';
   if(photo){
     var src2=photo instanceof File?URL.createObjectURL(photo):photo;
     h+='<div class="pbox has"><img src="'+src2+'"><button class="pbox-rm" id="rm_'+tk.key+'" onclick="rmPhoto(\''+tk.key+'\')">✕</button></div>';
@@ -496,7 +508,9 @@ function mCard(b,t,n){
     var cnt=tCnt(b,t,n,tk.key);
     // 子林大C 計步：顯示累積次數/15次（5週×3次總目標）
     var dispGoal = (b==="子林大C" && tk.key==="steps") ? 15 : tk.goal;
-    h+='<div class="mtask"><div class="mtlbl">'+tk.icon+' '+esc(tk.name.length>14?tk.name.substring(0,14)+'..':tk.name)+' '+cnt+'/'+dispGoal+tk.unit+'</div>';
+    var wCnt=(b==="香綺大C"&&tk.type==="weekly")?tCntWeek(b,t,n,tk.key):null;
+    var cntTxt=(b==="香綺大C"&&tk.type==="weekly")?(wCnt+"(本週)/"+cnt):cnt+"/"+dispGoal;
+    h+='<div class="mtask"><div class="mtlbl">'+tk.icon+' '+esc(tk.name.length>14?tk.name.substring(0,14)+'..':tk.name)+' '+cntTxt+tk.unit+'</div>';
     h+='<div class="dots">';
     for(var i=0;i<TOTAL;i++){
       var d=new Date(A_START);d.setDate(d.getDate()+i);
